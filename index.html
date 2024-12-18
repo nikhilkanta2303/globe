@@ -3,21 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Interactive Rotating Globe</title>
+    <title>Interactive Rotating Globe</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body { 
             margin: 0; 
             overflow: hidden;
             background-color: #0a192f;
             font-family: Arial, sans-serif;
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
         }
+
         canvas { 
             display: block; 
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
+
         #controlPanel {
             position: fixed;
-            top: 20px;
-            right: 20px;
             background: rgba(10, 25, 47, 0.9);
             padding: 20px;
             border-radius: 10px;
@@ -25,17 +38,25 @@
             z-index: 1000;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             min-width: 250px;
+            transition: all 0.3s ease;
         }
+
         .control-group {
             margin-bottom: 15px;
         }
+
         .control-group label {
             display: block;
             margin-bottom: 5px;
             color: #64ffda;
             font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+
         input[type="range"] {
             width: 100%;
             height: 5px;
@@ -44,21 +65,169 @@
             outline: none;
             opacity: 0.7;
             transition: opacity .2s;
+            -webkit-appearance: none;
         }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #64ffda;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #64ffda;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
         input[type="range"]:hover {
             opacity: 1;
         }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+
         .value-display {
-            float: right;
             font-size: 0.8em;
             color: #8892b0;
+            min-width: 30px;
+            text-align: right;
+            margin-left: 10px;
         }
+
         h3 {
             margin-top: 0;
             color: #64ffda;
             border-bottom: 1px solid #1a2f4c;
             padding-bottom: 10px;
             margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        /* Desktop styles */
+        @media screen and (min-width: 769px) {
+            #controlPanel {
+                top: 20px;
+                right: 20px;
+                width: 300px;
+                max-width: 30%;
+            }
+        }
+
+        /* Mobile styles */
+        @media screen and (max-width: 768px) {
+            #controlPanel {
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                border-radius: 10px 10px 0 0;
+                max-height: 30vh;
+                overflow-y: auto;
+                padding: 12px 15px;
+            }
+
+            canvas {
+                height: 70vh !important;
+            }
+
+            .control-group {
+                margin-bottom: 12px;
+            }
+
+            h3 {
+                font-size: 1em;
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+            }
+
+            .control-group label {
+                font-size: 0.8em;
+                margin-bottom: 3px;
+            }
+
+            .value-display {
+                font-size: 0.75em;
+            }
+
+            input[type="range"] {
+                height: 4px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                width: 12px;
+                height: 12px;
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        /* Small mobile devices */
+        @media screen and (max-width: 480px) {
+            #controlPanel {
+                padding: 10px;
+                max-height: 25vh;
+            }
+
+            canvas {
+                height: 75vh !important;
+            }
+
+            .control-group {
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Landscape mode */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            #controlPanel {
+                max-height: 60vh;
+                right: 0;
+                width: 250px;
+                left: auto;
+            }
+
+            canvas {
+                height: 100vh !important;
+            }
+        }
+
+        /* Scrollbar styling */
+        #controlPanel {
+            scrollbar-width: thin;
+            scrollbar-color: #64ffda #1a2f4c;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #controlPanel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #controlPanel::-webkit-scrollbar-track {
+            background: #1a2f4c;
+            border-radius: 3px;
+        }
+
+        #controlPanel::-webkit-scrollbar-thumb {
+            background-color: #64ffda;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -66,28 +235,45 @@
     <div id="controlPanel">
         <h3>Light Controls</h3>
         <div class="control-group">
-            <label>Ambient Light <span class="value-display" id="ambientValue">0.4</span></label>
+            <label>
+                Ambient Light
+                <span class="value-display" id="ambientValue">0.4</span>
+            </label>
             <input type="range" id="ambientLight" min="0" max="1" step="0.1" value="0.4">
         </div>
         <div class="control-group">
-            <label>Directional Light <span class="value-display" id="directionalValue">1.0</span></label>
+            <label>
+                Directional Light
+                <span class="value-display" id="directionalValue">1.0</span>
+            </label>
             <input type="range" id="directionalLight" min="0" max="2" step="0.1" value="1">
         </div>
         <div class="control-group">
-            <label>Point Light <span class="value-display" id="pointValue">0.5</span></label>
+            <label>
+                Point Light
+                <span class="value-display" id="pointValue">0.5</span>
+            </label>
             <input type="range" id="pointLight" min="0" max="1" step="0.1" value="0.5">
         </div>
         <div class="control-group">
-            <label>Rim Light <span class="value-display" id="rimValue">0.3</span></label>
+            <label>
+                Rim Light
+                <span class="value-display" id="rimValue">0.3</span>
+            </label>
             <input type="range" id="rimLight" min="0" max="1" step="0.1" value="0.3">
         </div>
         <div class="control-group">
-            <label>Atmosphere Opacity <span class="value-display" id="atmosphereValue">0.1</span></label>
+            <label>
+                Atmosphere Opacity
+                <span class="value-display" id="atmosphereValue">0.1</span>
+            </label>
             <input type="range" id="atmosphereOpacity" min="0" max="0.3" step="0.01" value="0.1">
         </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+    // Global variables
     let scene, camera, renderer, globe, starField, atmosphere;
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
@@ -99,19 +285,29 @@
     let momentum = 0;
     let isScrolling = false;
     let scrollSpeed = 0.1;
+    let isMobile = window.innerWidth <= 768;
+    let globeScale = 1;
 
+    // Helper function to set viewport height for mobile
+    function setViewportHeight() {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    // Create starfield with optimized parameters
     function createStarField() {
         const starsGeometry = new THREE.BufferGeometry();
         const starsMaterial = new THREE.PointsMaterial({
             color: 0xFFFFFF,
-            size: 0.1,
+            size: isMobile ? 0.08 : 0.1,
             transparent: true,
             opacity: 0.8,
             sizeAttenuation: true
         });
 
         const starsVertices = [];
-        for(let i = 0; i < 5000; i++) {
+        const starCount = isMobile ? 3000 : 5000;
+        for(let i = 0; i < starCount; i++) {
             const x = (Math.random() - 0.5) * 2000;
             const y = (Math.random() - 0.5) * 2000;
             const z = -Math.random() * 2000;
@@ -123,6 +319,7 @@
         scene.add(starField);
     }
 
+    // Setup lighting system
     function setupLighting() {
         lights.ambient = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(lights.ambient);
@@ -140,58 +337,53 @@
         scene.add(lights.rim);
     }
 
+    // Setup light controls with improved touch handling
     function setupLightControls() {
-        document.getElementById('ambientLight').addEventListener('input', function(e) {
-            lights.ambient.intensity = parseFloat(e.target.value);
-            document.getElementById('ambientValue').textContent = e.target.value;
-        });
+        const controls = {
+            'ambientLight': { min: 0, max: 1, step: 0.1, default: 0.4 },
+            'directionalLight': { min: 0, max: 2, step: 0.1, default: 1.0 },
+            'pointLight': { min: 0, max: 1, step: 0.1, default: 0.5 },
+            'rimLight': { min: 0, max: 1, step: 0.1, default: 0.3 },
+            'atmosphereOpacity': { min: 0, max: 0.3, step: 0.01, default: 0.1 }
+        };
 
-        document.getElementById('directionalLight').addEventListener('input', function(e) {
-            lights.directional.intensity = parseFloat(e.target.value);
-            document.getElementById('directionalValue').textContent = e.target.value;
-        });
-
-        document.getElementById('pointLight').addEventListener('input', function(e) {
-            lights.point.intensity = parseFloat(e.target.value);
-            document.getElementById('pointValue').textContent = e.target.value;
-        });
-
-        document.getElementById('rimLight').addEventListener('input', function(e) {
-            lights.rim.intensity = parseFloat(e.target.value);
-            document.getElementById('rimValue').textContent = e.target.value;
-        });
-
-        document.getElementById('atmosphereOpacity').addEventListener('input', function(e) {
-            if (atmosphere) {
-                atmosphere.material.opacity = parseFloat(e.target.value);
-                document.getElementById('atmosphereValue').textContent = e.target.value;
+        Object.entries(controls).forEach(([control, settings]) => {
+            const element = document.getElementById(control);
+            const valueDisplay = document.getElementById(`${control.replace('Light', '')}Value`);
+            
+            if (element && valueDisplay) {
+                element.addEventListener('input', function(e) {
+                    const value = parseFloat(e.target.value);
+                    valueDisplay.textContent = value.toFixed(2);
+                    
+                    if (control === 'atmosphereOpacity' && atmosphere) {
+                        atmosphere.material.opacity = value;
+                    } else if (lights[control.replace('Light', '')]) {
+                        lights[control.replace('Light', '')].intensity = value;
+                    }
+                });
             }
         });
     }
 
-    function handleMomentumScroll() {
-        if (Math.abs(momentum) > 0.0001) {
-            targetRotation.y += momentum;
-            momentum *= 0.95;
-            requestAnimationFrame(handleMomentumScroll);
-        } else {
-            isScrolling = false;
-        }
-    }
-
+    // Initialize scene with optimized parameters
     function init() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color('#0a192f');
 
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-        camera.position.z = 4;
+        const aspectRatio = window.innerWidth / window.innerHeight;
+        const fov = isMobile ? (aspectRatio > 1 ? 75 : 65) : 75;
+        
+        camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 2000);
+        camera.position.z = isMobile ? (aspectRatio > 1 ? 4 : 3.2) : 4;
 
         renderer = new THREE.WebGLRenderer({ 
             antialias: true,
-            alpha: true
+            alpha: true,
+            powerPreference: "high-performance"
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
         createStarField();
@@ -200,46 +392,72 @@
         const globeContainer = new THREE.Object3D();
         scene.add(globeContainer);
 
-        const geometry = new THREE.SphereGeometry(1.8, 64, 64);
+        const globeSize = isMobile ? (aspectRatio > 0.3 ? 0.8 : 0.6) : 1.8;
+        const geometry = new THREE.SphereGeometry(
+            globeSize,
+            isMobile ? 48 : 64,
+            isMobile ? 48 : 64
+        );
+
         const texture = new THREE.TextureLoader().load(
             'https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg',
             function() {
                 const material = new THREE.MeshPhongMaterial({ 
                     map: texture,
                     specular: new THREE.Color('grey'),
-                    shininess: 15,
+                    shininess: 13,
                     bumpScale: 0.05
                 });
 
                 globe = new THREE.Mesh(geometry, material);
                 globeContainer.add(globe);
 
-                const atmosphereGeometry = new THREE.SphereGeometry(1.85, 64, 64);
+                const atmosphereGeometry = new THREE.SphereGeometry(
+                    globeSize + 0.05,
+                    isMobile ? 48 : 64,
+                    isMobile ? 48 : 64
+                );
+                
                 const atmosphereMaterial = new THREE.MeshPhongMaterial({
                     color: 0x3498db,
                     transparent: true,
                     opacity: 0.1,
                     side: THREE.BackSide
                 });
+                
                 atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
                 globeContainer.add(atmosphere);
 
                 setupLightControls();
+                updateGlobeScale();
             }
         );
 
-        document.addEventListener('mousedown', onMouseDown, false);
-        document.addEventListener('mouseup', onMouseUp, false);
-        document.addEventListener('mousemove', onMouseMove, false);
-        window.addEventListener('resize', onWindowResize, false);
-        renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
-        renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
-        renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
-        renderer.domElement.addEventListener('touchend', onTouchEnd, false);
+        // Event Listeners
+        if (isMobile) {
+            renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+            renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+            renderer.domElement.addEventListener('touchend', onTouchEnd, false);
+        } else {
+            document.addEventListener('mousedown', onMouseDown, false);
+            document.addEventListener('mouseup', onMouseUp, false);
+            document.addEventListener('mousemove', onMouseMove, false);
+            renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
+        }
 
+        window.addEventListener('resize', onWindowResize, false);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                setViewportHeight();
+                onWindowResize();
+            }, 100);
+        });
+
+        setViewportHeight();
         animate();
     }
 
+    // Handle wheel events with momentum
     function onWheel(event) {
         if (globe) {
             event.preventDefault();
@@ -253,6 +471,17 @@
         }
     }
 
+    function handleMomentumScroll() {
+        if (Math.abs(momentum) > 0.0001) {
+            targetRotation.y += momentum;
+            momentum *= 0.95;
+            requestAnimationFrame(handleMomentumScroll);
+        } else {
+            isScrolling = false;
+        }
+    }
+
+    // Mouse event handlers
     function onMouseDown(event) {
         isDragging = true;
         previousMousePosition = {
@@ -261,7 +490,7 @@
         };
     }
 
-    function onMouseUp(event) {
+    function onMouseUp() {
         isDragging = false;
     }
 
@@ -284,7 +513,9 @@
         }
     }
 
+    // Touch event handlers
     function onTouchStart(event) {
+        event.preventDefault();
         isDragging = true;
         previousMousePosition = {
             x: event.touches[0].clientX,
@@ -316,16 +547,38 @@
         isDragging = false;
     }
 
+    // Helper functions
     function toRadians(angle) {
         return angle * (Math.PI / 180);
     }
 
-    function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+    function updateGlobeScale() {
+        if (globe && atmosphere) {
+            const aspectRatio = window.innerWidth / window.innerHeight;
+            globeScale = isMobile ? (aspectRatio > 1 ? 1 : 0.9) : 1;
+            
+            globe.scale.set(globeScale, globeScale, globeScale);
+            atmosphere.scale.set(globeScale, globeScale, globeScale);
+        }
     }
 
+    // Window resize handler
+    function onWindowResize() {
+        isMobile = window.innerWidth <= 768;
+        const aspectRatio = window.innerWidth / window.innerHeight;
+        
+        camera.aspect = aspectRatio;
+        camera.fov = isMobile ? (aspectRatio > 1 ? 75 : 65) : 75;
+        camera.position.z = isMobile ? (aspectRatio > 1 ? 4 : 3.2) : 4;
+        
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        
+        updateGlobeScale();
+    }
+
+    // Animation loop
     function animate() {
         requestAnimationFrame(animate);
 
@@ -357,6 +610,7 @@
         renderer.render(scene, camera);
     }
 
+    // Initialize the application
     init();
 </script>
 </body>
