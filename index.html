@@ -501,7 +501,7 @@
                 y: event.clientY - previousMousePosition.y
             };
 
-            targetRotation.y -= toRadians(deltaMove.x * 0.5);
+            targetRotation.y += toRadians(deltaMove.x * 0.5);
             targetRotation.x += toRadians(deltaMove.y * 0.5);
 
             targetRotation.x = Math.max(-rotationLimitY, Math.min(rotationLimitY, targetRotation.x));
@@ -531,7 +531,7 @@
                 y: event.touches[0].clientY - previousMousePosition.y
             };
 
-            targetRotation.y -= toRadians(deltaMove.x * 0.5);
+            targetRotation.y += toRadians(deltaMove.x * 0.5);
             targetRotation.x += toRadians(deltaMove.y * 0.5);
 
             targetRotation.x = Math.max(-rotationLimitY, Math.min(rotationLimitY, targetRotation.x));
